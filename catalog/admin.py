@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Author, Genre, Book, BookInstance
+from django.core.exceptions import ValidationError
 
 class AuthorAdmin(admin.ModelAdmin):
     list_display = ('last_name', 'first_name', 'date_of_birth', 'date_of_death')
@@ -12,8 +13,14 @@ class BooksInstanceInline(admin.TabularInline):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author', 'display_genre')
+    list_display = ('title', 'display_authors', 'display_genre')
     inlines = [BooksInstanceInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        if form.instance.authors.count() > 5:
+            raise ValidationError("A book can have up to 5 authors only.")
 
 @admin.register(BookInstance)
 class BookInstanceAdmin(admin.ModelAdmin):
